@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ album.name }} | Personal Gallery{% endblock %}
+
+{% block content %}
+<section class="album-hero">
+    <div class="album-hero__copy">
+        <a class="back-link" href="{{ url_for('index') }}">Back to albums</a>
+        <p class="eyebrow">Album</p>
+        <h1>{{ album.name }}</h1>
+        <p class="lead">{{ album.description or "Browse uploaded images and request captions on demand." }}</p>
+        <div class="stat-row">
+            <article class="stat-card">
+                <strong>{{ album.images|length }}</strong>
+                <span>Uploaded images</span>
+            </article>
+            <article class="stat-card">
+                <strong>{{ album.images|selectattr('caption')|list|length }}</strong>
+                <span>Captions ready</span>
+            </article>
+        </div>
+        <div class="info-callout">
+            <h3>Browsing tip</h3>
+            <p>Use the album-wide caption action after uploading a batch, then refresh individual captions only when you want a different result.</p>
+        </div>
+    </div>
+    <aside class="panel panel--album-controls">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Actions</p>
+                <h2>Manage this album</h2>
+                <p class="panel-copy">Uploads support multiple images in one submission.</p>
+            </div>
+        </div>
+        <form method="post" action="{{ url_for('upload_images', album_id=album.id) }}" enctype="multipart/form-data" class="form-grid" data-loading-text="Uploading...">
+            <label>
+                Upload images
+                <input type="file" name="images" accept="image/*" multiple required>
+            </label>
+            <button type="submit">Add to album</button>
+        </form>
+        {% if album.images %}
+            <form method="post" action="{{ url_for('caption_album', album_id=album.id) }}" data-loading-text="Generating captions...">
+                <button type="submit" class="button-secondary">Generate missing captions</button>
+            </form>
+        {% endif %}
+    </aside>
+</section>
+
+{% if album.images %}
+    <section class="gallery-grid">
+        {% for image in album.images %}
+            <article class="image-card">
+                <div class="image-card__media">
+                    <img src="{{ url_for('static', filename=image.file_path) }}" alt="{{ image.caption or image.filename }}">
+                    <span class="image-card__badge">{{ "Captioned" if image.caption else "Pending" }}</span>
+                </div>
+                <div class="image-card__body">
+                    <div class="image-copy">
+                        <h2>{{ image.filename }}</h2>
+                        <p class="image-meta">Uploaded {{ image.uploaded_at[:10] }}</p>
+                        <p class="caption">{{ image.caption or "No caption generated yet." }}</p>
+                    </div>
+                    <form method="post" action="{{ url_for('caption_image', album_id=album.id, image_id=image.id) }}" data-loading-text="Generating...">
+                        <button type="submit">{{ "Refresh caption" if image.caption else "Generate caption" }}</button>
+                    </form>
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    <article class="empty-state">
+        <h3>No images yet</h3>
+        <p>Upload one or more images to start building captions for this album.</p>
+    </article>
+{% endif %}
+{% endblock %}

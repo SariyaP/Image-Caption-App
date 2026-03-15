@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Albums | Personal Gallery{% endblock %}
+
+{% block content %}
+{% set ns = namespace(total_images=0) %}
+{% for album in albums %}
+    {% set ns.total_images = ns.total_images + (album.images|length) %}
+{% endfor %}
+<section class="hero-panel">
+    <div class="hero-panel__copy">
+        <p class="eyebrow">Visual archive</p>
+        <h1>Build albums that turn images into readable stories.</h1>
+        <p class="lead">Organize personal photos into albums, browse them in a calm white-and-blue gallery, and generate captions with the pretrained BLIP model while you explore.</p>
+        <div class="stat-row">
+            <article class="stat-card">
+                <strong>{{ albums|length }}</strong>
+                <span>Albums created</span>
+            </article>
+            <article class="stat-card">
+                <strong>{{ ns.total_images }}</strong>
+                <span>Total images</span>
+            </article>
+        </div>
+        <div class="info-callout">
+            <h3>Better flow</h3>
+            <p>Create an album, upload several images at once, then generate captions as needed or for the whole album in one step.</p>
+        </div>
+    </div>
+    <aside class="panel panel--form">
+        <div>
+            <p class="eyebrow">Create album</p>
+            <h2>Start a new collection</h2>
+            <p class="panel-copy">Give the album a clear name so it is easier to browse later.</p>
+        </div>
+        <form method="post" action="{{ url_for('create_album') }}" class="form-grid" data-loading-text="Creating...">
+            <label>
+                Album name
+                <input type="text" name="name" placeholder="Weekend trip" required>
+            </label>
+            <label>
+                Description
+                <textarea name="description" rows="4" placeholder="Optional album notes"></textarea>
+            </label>
+            <button type="submit">Create album</button>
+        </form>
+    </aside>
+</section>
+
+<section class="album-section">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Your albums</p>
+            <h2>Browse collections</h2>
+            <p class="panel-copy">Open any album to upload more images or generate captions.</p>
+        </div>
+        <span class="pill">{{ albums|length }} album{{ '' if albums|length == 1 else 's' }}</span>
+    </div>
+
+    {% if albums %}
+        <div class="album-grid">
+            {% for album in albums %}
+                <article class="album-card">
+                    <div class="album-card__cover">
+                        {% if album.images %}
+                            <img src="{{ url_for('static', filename=album.images[0].file_path) }}" alt="{{ album.name }}">
+                        {% else %}
+                            <div class="album-card__placeholder">No preview yet</div>
+                        {% endif %}
+                    </div>
+                    <div class="album-card__header">
+                        <div>
+                            <h3>{{ album.name }}</h3>
+                            <span>{{ album.images|length }} image{{ '' if album.images|length == 1 else 's' }}</span>
+                        </div>
+                        <span class="album-card__date">{{ album.created_at[:10] }}</span>
+                    </div>
+                    <p>{{ album.description or "No description added yet." }}</p>
+                    <a class="text-link" href="{{ url_for('view_album', album_id=album.id) }}">Open album</a>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <article class="empty-state">
+            <h3>No albums yet</h3>
+            <p>Create your first album to start uploading images and generating captions.</p>
+        </article>
+    {% endif %}
+</section>
+{% endblock %}
